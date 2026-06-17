@@ -11,7 +11,7 @@ from src.finsight.rag.retriever import MultiQueryRetriever
 from src.finsight.schemas import RetrievedChunk
 
 FALLBACK_ANSWER = "I could not find this information in the uploaded documents."
-RETRIEVAL_STRATEGY = "multi_query_rrf"
+RETRIEVAL_STRATEGY = "hybrid_faiss_bm25_rrf"
 
 
 class RAGPipeline:
