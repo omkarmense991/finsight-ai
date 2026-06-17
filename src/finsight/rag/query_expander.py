@@ -61,6 +61,16 @@ def generate_search_queries(question: str) -> list[str]:
         or "total dividend" in lower_question
     )
 
+    is_leadership_query = (
+        "ceo" in lower_question
+        or "chief executive officer" in lower_question
+        or "managing director" in lower_question
+        or "md" in lower_question
+        or "leadership" in lower_question
+        or "executive" in lower_question
+        or "board of directors" in lower_question
+    )
+
     # =========================================
     # Geography Query Expansion
     # =========================================
@@ -149,6 +159,18 @@ def generate_search_queries(question: str) -> list[str]:
                 "dividend of rupees per equity share",
                 "recommended final dividend declared interim dividend",
                 "dividend distribution shareholders per share fiscal 2026",
+            ]
+        )
+
+    if is_leadership_query:
+        queries.extend(
+            [
+                "chief executive officer managing director",
+                "Salil Parekh Chief Executive Officer Managing Director",
+                "CEO and Managing Director Salil Parekh",
+                "letter to the shareholder Salil Parekh Chief Executive Officer",
+                "Infosys leadership team chief executive officer managing director",
+                "Board of Directors Salil Parekh CEO Managing Director",
             ]
         )
 

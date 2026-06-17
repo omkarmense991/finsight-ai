@@ -19,8 +19,13 @@ EMBEDDING_MODEL_NAME = os.getenv(
     "sentence-transformers/all-MiniLM-L6-v2",
 )
 
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.5")
 
 DEFAULT_TOP_K = 5
-MIN_RETRIEVAL_SCORE = 0.25
+MIN_RETRIEVAL_SCORE = 0.025
