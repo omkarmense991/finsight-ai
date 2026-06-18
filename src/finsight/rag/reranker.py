@@ -64,7 +64,15 @@ class CrossEncoderReranker:
                 + self.reranker_weight * reranker_score
             )
 
-            scored_chunks.append((chunk, final_score))
+            reranked_chunk = RetrievedChunk(
+                chunk_id=chunk.chunk_id,
+                document_name=chunk.document_name,
+                page_number=chunk.page_number,
+                text=chunk.text,
+                score=float(final_score),
+            )
+
+            scored_chunks.append((reranked_chunk, final_score))
 
         scored_chunks.sort(
             key=lambda item: item[1],

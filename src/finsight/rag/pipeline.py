@@ -9,13 +9,13 @@ from src.finsight.config import (
 )
 from src.finsight.rag.reranker import CrossEncoderReranker
 from src.finsight.rag.llm_client import get_llm_client
-from src.finsight.rag.prompt import build_user_prompt
+from src.finsight.rag.prompt import FALLBACK_RESPONSE, build_user_prompt
 from src.finsight.rag.retriever import MultiQueryRetriever
 from src.finsight.schemas import RetrievedChunk
 
-FALLBACK_ANSWER = "I could not find this information in the uploaded documents."
+FALLBACK_ANSWER = FALLBACK_RESPONSE
 RETRIEVAL_STRATEGY = (
-    "hybrid_faiss_bm25_rrf_rerank" if USE_RERANKER else "hybrid_faiss_bm25_rrf"
+    "hybrid_faiss_bm25_rrf_blended_rerank" if USE_RERANKER else "hybrid_faiss_bm25_rrf"
 )
 
 
@@ -55,11 +55,15 @@ class RAGPipeline:
         retrieved_chunks: int,
         is_answer_found: bool,
         fallback_reason: str | None = None,
+        best_retrieval_score: float | None = None,
+        best_final_score: float | None = None,
     ) -> dict:
         return {
             "top_k": top_k,
             "min_score": min_score,
             "best_score": best_score,
+            "best_retrieval_score": best_retrieval_score,
+            "best_final_score": best_final_score,
             "retrieved_chunks": retrieved_chunks,
             "retrieval_strategy": RETRIEVAL_STRATEGY,
             "llm_provider": LLM_PROVIDER,
@@ -92,12 +96,16 @@ class RAGPipeline:
                     retrieved_chunks=0,
                     is_answer_found=False,
                     fallback_reason="no_chunks_retrieved",
+                    best_retrieval_score=None,
+                    best_final_score=None,
                 ),
             }
 
-        best_score = retrieved_chunks[0].score
+        # This score is from the original hybrid retriever.
+        # Use it only for the retrieval confidence threshold.
+        best_retrieval_score = retrieved_chunks[0].score
 
-        if best_score < min_score:
+        if best_retrieval_score < min_score:
             return {
                 "question": question,
                 "answer": FALLBACK_ANSWER,
@@ -105,10 +113,12 @@ class RAGPipeline:
                 "metadata": self._build_metadata(
                     top_k=top_k,
                     min_score=min_score,
-                    best_score=best_score,
+                    best_score=best_retrieval_score,
                     retrieved_chunks=len(retrieved_chunks),
                     is_answer_found=False,
                     fallback_reason="retrieval_score_below_threshold",
+                    best_retrieval_score=best_retrieval_score,
+                    best_final_score=None,
                 ),
             }
 
@@ -120,6 +130,10 @@ class RAGPipeline:
             )
         else:
             retrieved_chunks = retrieved_chunks[:top_k]
+
+        # This score is the final score shown in the sources array.
+        # After reranking, this becomes the blended reranker score.
+        best_final_score = retrieved_chunks[0].score if retrieved_chunks else None
 
         context = self._format_context(retrieved_chunks)
         user_prompt = build_user_prompt(question=question, context=context)
@@ -134,10 +148,12 @@ class RAGPipeline:
                 "metadata": self._build_metadata(
                     top_k=top_k,
                     min_score=min_score,
-                    best_score=best_score,
+                    best_score=best_final_score,
                     retrieved_chunks=len(retrieved_chunks),
                     is_answer_found=False,
                     fallback_reason="llm_could_not_answer_from_context",
+                    best_retrieval_score=best_retrieval_score,
+                    best_final_score=best_final_score,
                 ),
             }
 
@@ -148,8 +164,10 @@ class RAGPipeline:
             "metadata": self._build_metadata(
                 top_k=top_k,
                 min_score=min_score,
-                best_score=best_score,
+                best_score=best_final_score,
                 retrieved_chunks=len(retrieved_chunks),
                 is_answer_found=True,
+                best_retrieval_score=best_retrieval_score,
+                best_final_score=best_final_score,
             ),
         }

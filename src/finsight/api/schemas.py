@@ -28,6 +28,8 @@ class MetadataResponse(BaseModel):
     top_k: int
     min_score: float
     best_score: float | None
+    best_retrieval_score: float | None = None
+    best_final_score: float | None = None
     retrieved_chunks: int
     retrieval_strategy: str
     llm_provider: str
