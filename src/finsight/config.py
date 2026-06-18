@@ -29,3 +29,21 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.5")
 
 DEFAULT_TOP_K = 5
 MIN_RETRIEVAL_SCORE = 0.025
+
+USE_RERANKER = os.getenv("USE_RERANKER", "false").lower() == "true"
+
+
+RERANKER_MODEL_NAME = os.getenv(
+    "RERANKER_MODEL_NAME",
+    "cross-encoder/ms-marco-MiniLM-L-6-v2",
+)
+
+RERANK_TOP_K = int(os.getenv("RERANK_TOP_K", "20"))
+
+RERANKER_HYBRID_WEIGHT = float(
+    os.getenv("RERANKER_HYBRID_WEIGHT", "0.7")
+)
+
+RERANKER_MODEL_WEIGHT = float(
+    os.getenv("RERANKER_MODEL_WEIGHT", "0.3")
+)

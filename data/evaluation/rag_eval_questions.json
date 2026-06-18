@@ -1,0 +1,157 @@
+[
+  {
+    "question": "What dividend did Infosys announce?",
+    "expected_pages": [38, 323, 361],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What are the business segments of Infosys?",
+    "expected_pages": [80, 355, 356],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What are the geographical revenue segments?",
+    "expected_pages": [35, 334],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What are the segmental revenues of Infosys?",
+    "expected_pages": [80, 356],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What does Infosys say about operating margin?",
+    "expected_pages": [80],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "Who is the CEO of Infosys?",
+    "expected_pages": [117, 350],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What are the cybersecurity risks mentioned?",
+    "expected_pages": [130, 134],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What are the major business risks and mitigations?",
+    "expected_pages": [130, 132, 134, 135],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What was Infosys' total revenue from operations in fiscal 2026?",
+    "expected_pages": [33, 77, 287, 356],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What factors affected overall segment profitability?",
+    "expected_pages": [80],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What are the key risks related to contractual liabilities?",
+    "expected_pages": [135],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What does Infosys say about AI First Services?",
+    "expected_pages": [23, 28],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What was the buyback amount for fiscal 2026?",
+    "expected_pages": [16, 36, 38, 321],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What was Infosys' consolidated revenue from operations in fiscal 2026?",
+    "expected_pages": [33, 287],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What was Infosys' standalone revenue from operations in fiscal 2026?",
+    "expected_pages": [33, 209],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What was the year-on-year consolidated revenue growth?",
+    "expected_pages": [33, 77],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What factors contributed to revenue growth?",
+    "expected_pages": [77],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "How many new customers did Infosys add during fiscal 2026?",
+    "expected_pages": [77],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What percentage of revenues were export revenues?",
+    "expected_pages": [78],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What was Infosys' total dividend per share for fiscal 2026?",
+    "expected_pages": [38],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What was the payout ratio including buyback and dividend?",
+    "expected_pages": [38],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What was the buyback price per share?",
+    "expected_pages": [16, 36, 38],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What does Infosys say about lower utilization and investments in talent?",
+    "expected_pages": [80],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What risks does Infosys mention around complex and evolving regulatory environment?",
+    "expected_pages": [132, 135],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What is Infosys Topaz Fabric?",
+    "expected_pages": [18, 23, 28],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What does Infosys say about AI agents?",
+    "expected_pages": [23, 28, 70, 86],
+    "answer_type": "answerable"
+  },
+  {
+    "question": "What is the CEO's favorite cricket team?",
+    "expected_pages": [],
+    "answer_type": "unanswerable"
+  },
+  {
+    "question": "What is Infosys planning to do in Mars colonization?",
+    "expected_pages": [],
+    "answer_type": "unanswerable"
+  },
+  {
+    "question": "What is the personal phone number of Infosys CEO?",
+    "expected_pages": [],
+    "answer_type": "unanswerable"
+  },
+  {
+    "question": "What is Infosys' plan for building a hotel on the moon?",
+    "expected_pages": [],
+    "answer_type": "unanswerable"
+  },
+  {
+    "question": "Which IPL team does Infosys officially sponsor in this report?",
+    "expected_pages": [],
+    "answer_type": "unanswerable"
+  }
+]
