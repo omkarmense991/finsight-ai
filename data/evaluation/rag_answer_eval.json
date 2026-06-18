@@ -1,0 +1,47 @@
+[
+  {
+    "question": "What dividend did Infosys announce?",
+    "answer_type": "answerable",
+    "expected_answer_contains": ["₹23", "₹25", "₹48"],
+    "expected_source_pages": [36, 38, 322, 323, 361]
+  },
+  {
+    "question": "What was Infosys' consolidated revenue from operations in fiscal 2026?",
+    "answer_type": "answerable",
+    "expected_answer_contains": ["₹1,78,650", "crore"],
+    "expected_source_pages": [33, 77, 287]
+  },
+  {
+    "question": "Who is the CEO of Infosys?",
+    "answer_type": "answerable",
+    "expected_answer_contains": ["Salil Parekh"],
+    "expected_source_pages": [117, 350]
+  },
+  {
+    "question": "What are the geographical revenue segments?",
+    "answer_type": "answerable",
+    "expected_answer_contains": [
+      "North America",
+      "Europe",
+      "India",
+      "Rest of the World"
+    ],
+    "expected_source_pages": [35, 334]
+  },
+  {
+    "question": "What is the CEO's favorite cricket team?",
+    "answer_type": "unanswerable",
+    "expected_answer_contains": [
+      "I could not find this information in the uploaded documents."
+    ],
+    "expected_source_pages": []
+  },
+  {
+    "question": "What is Infosys planning to do in Mars colonization?",
+    "answer_type": "unanswerable",
+    "expected_answer_contains": [
+      "I could not find this information in the uploaded documents."
+    ],
+    "expected_source_pages": []
+  }
+]
