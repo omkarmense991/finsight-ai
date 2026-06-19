@@ -1,14 +1,14 @@
 # FinSight AI — Financial Document Intelligence Assistant
 
-FinSight AI is a production-style financial document intelligence assistant built using Retrieval-Augmented Generation (RAG). It allows users to upload financial PDFs such as annual reports, ask natural-language questions, and receive source-grounded answers backed by retrieved document chunks.
+FinSight AI is a production-style financial document intelligence assistant built using Retrieval-Augmented Generation (RAG). It allows users to upload financial PDFs such as annual reports, ask natural-language questions, receive source-grounded answers backed by retrieved document chunks, and extract structured financial highlights as JSON.
 
-The project focuses on practical AI engineering concepts including document ingestion, chunking, embeddings, vector search, hybrid retrieval, reranking, LLM prompting, hallucination control, FastAPI backend development, evaluation, testing, and Docker-based deployment.
+The project focuses on practical AI engineering concepts including document ingestion, PDF parsing, chunking, embeddings, vector search, hybrid retrieval, reranking, LLM prompting, hallucination control, structured extraction, LangGraph workflow routing, tool calling, FastAPI backend development, evaluation, latency tracking, testing, and Docker-based deployment.
 
 ---
 
 ## Project Objective
 
-Financial reports are long, dense, and difficult to analyze manually. Important information such as revenue, margins, dividends, risks, business segments, and management commentary is often spread across hundreds of pages.
+Financial reports are long, dense, and difficult to analyze manually. Important information such as revenue, margins, dividends, risks, business segments, buybacks, and management commentary is often spread across hundreds of pages.
 
 FinSight AI solves this by building a source-grounded RAG pipeline:
 
@@ -16,7 +16,7 @@ FinSight AI solves this by building a source-grounded RAG pipeline:
 PDF → Text Extraction → Chunking → Embeddings → FAISS + BM25 Retrieval → Reranking → LLM Answer → Sources + Metadata
 ```
 
-The goal is not to build a generic chatbot, but a financial document intelligence system that answers only from uploaded documents and refuses unsupported questions.
+The goal is not to build a generic chatbot, but a financial document intelligence system that answers only from uploaded documents, refuses unsupported questions, and can extract key financial metrics in structured JSON format.
 
 ---
 
@@ -38,7 +38,11 @@ The goal is not to build a generic chatbot, but a financial document intelligenc
 * FastAPI backend
 * PDF upload endpoint
 * Ask endpoint for document Q&A
-* Structured response with sources and metadata
+* Structured financial highlights extraction as JSON
+* Controlled LangGraph workflow router
+* Basic application-level tool calling through workflow nodes
+* Structured responses with sources and metadata
+* Latency tracking for retrieval, reranking, LLM calls, and total response time
 * Retrieval evaluation using Recall@K and MRR@K
 * Full RAG answer smoke evaluation
 * API tests using pytest
@@ -59,34 +63,40 @@ Document Processing
 → Reranking
 → Prompting
 → LLM Integration
+→ Structured Extraction
+→ Workflow Routing
 → API Design
 → Evaluation
 → Dockerization
 ```
 
-Unlike a simple chatbot demo, FinSight AI includes retrieval evaluation, answer validation, fallback handling, reranking experiments, and production-style API responses.
+Unlike a simple chatbot demo, FinSight AI includes retrieval evaluation, answer validation, fallback handling, reranking experiments, structured JSON extraction, workflow routing, latency metadata, and production-style API responses.
 
 ---
 
 ## Tech Stack
 
-| Area           | Tools                                           |
-| -------------- | ----------------------------------------------- |
-| Language       | Python                                          |
-| API            | FastAPI, Uvicorn                                |
-| PDF Parsing    | PyMuPDF                                         |
-| Embeddings     | Sentence Transformers                           |
-| Vector Search  | FAISS                                           |
-| Keyword Search | BM25                                            |
-| Ranking        | Reciprocal Rank Fusion, Cross-Encoder Reranking |
-| LLM            | Gemini                                          |
-| Evaluation     | Recall@K, MRR@K, Full RAG Smoke Evaluation      |
-| Testing        | pytest, FastAPI TestClient                      |
-| Deployment     | Docker, Docker Compose                          |
+| Area                   | Tools                                           |
+| ---------------------- | ----------------------------------------------- |
+| Language               | Python                                          |
+| API                    | FastAPI, Uvicorn                                |
+| PDF Parsing            | PyMuPDF                                         |
+| Embeddings             | Sentence Transformers                           |
+| Vector Search          | FAISS                                           |
+| Keyword Search         | BM25                                            |
+| Ranking                | Reciprocal Rank Fusion, Cross-Encoder Reranking |
+| Workflow Orchestration | LangGraph                                       |
+| LLM                    | Gemini                                          |
+| Validation             | Pydantic                                        |
+| Evaluation             | Recall@K, MRR@K, Full RAG Smoke Evaluation      |
+| Testing                | pytest, FastAPI TestClient                      |
+| Deployment             | Docker, Docker Compose                          |
 
 ---
 
 ## Architecture
+
+### Core RAG Architecture
 
 ```mermaid
 flowchart TD
@@ -119,6 +129,24 @@ flowchart TD
     R --> T[FastAPI Response]
     S --> T
 ```
+
+### LangGraph Workflow Router
+
+```mermaid
+flowchart TD
+    A[User Request] --> B[LangGraph classify_intent]
+
+    B -->|normal_qna| C[rag_answer_tool]
+    B -->|financial_extraction| D[financial_highlights_tool]
+
+    C --> E[Source-Grounded RAG Answer]
+    D --> F[Structured Financial JSON]
+
+    E --> G[Workflow Response]
+    F --> G
+```
+
+The LangGraph workflow is intentionally controlled and simple. It is not a fully autonomous agent. It routes the request to the correct internal tool based on user intent.
 
 ---
 
@@ -268,6 +296,104 @@ The API returns sources separately in a structured array.
 
 ---
 
+## Structured Financial Extraction
+
+FinSight AI includes a dedicated structured extraction endpoint for financial highlights.
+
+This endpoint extracts key annual-report metrics into validated JSON:
+
+```text
+consolidated revenue from operations
+standalone revenue from operations
+year-on-year consolidated revenue growth
+total dividend per share
+buyback amount
+buyback price per share
+```
+
+For structured extraction, the system uses a coverage-first retrieval strategy:
+
+```text
+metric-specific retrieval queries
+→ combine unique chunks
+→ preserve coverage across financial fields
+→ Gemini structured JSON extraction
+→ schema normalization
+```
+
+This is different from normal Q&A. Normal Q&A uses blended reranking because the goal is to find the best evidence for one question. Structured extraction avoids one global rerank because a single reranker can over-focus on one topic, such as dividends or buybacks, and drop chunks needed for revenue fields.
+
+Structured extraction metadata uses:
+
+```text
+coverage_first_hybrid_faiss_bm25_rrf
+```
+
+The extraction response includes:
+
+* extracted financial values
+* source pages for each metric
+* extracted field count
+* missing fields
+* latency metadata
+* source chunks used
+
+---
+
+## LangGraph Workflow Router
+
+FinSight AI includes a small controlled LangGraph workflow router on top of the core RAG system.
+
+The workflow classifies the user request and routes it to the correct internal tool:
+
+```text
+User Question
+→ classify_intent
+→ normal_qna → rag_answer_tool
+→ financial_extraction → financial_highlights_tool
+```
+
+This adds workflow orchestration and application-level tool calling while keeping the core RAG system custom-built and explainable.
+
+### Supported Workflow Tools
+
+```text
+rag_answer_tool
+financial_highlights_tool
+```
+
+The project does not claim to be a fully autonomous multi-agent system. The workflow is intentionally controlled for reliability and interview explainability.
+
+---
+
+## Latency Tracking
+
+FinSight AI tracks latency for the main RAG steps:
+
+```text
+retrieval_ms
+rerank_ms
+llm_ms
+total_ms
+```
+
+Example:
+
+```json
+"timings_ms": {
+  "retrieval_ms": 329.84,
+  "rerank_ms": 460.45,
+  "llm_ms": 4041.83,
+  "total_ms": 4832.2
+}
+```
+
+This helps identify whether time is spent in retrieval, reranking, or the LLM call.
+
+For structured extraction, `rerank_ms` is usually `0` because extraction uses coverage-first retrieval instead of global reranking.
+
+---
+
 ## API Endpoints
 
 ### Health Check
@@ -355,7 +481,161 @@ Response:
     "retrieval_strategy": "hybrid_faiss_bm25_rrf_blended_rerank",
     "llm_provider": "gemini",
     "is_answer_found": true,
-    "fallback_reason": null
+    "fallback_reason": null,
+    "timings_ms": {
+      "retrieval_ms": 329.84,
+      "rerank_ms": 460.45,
+      "llm_ms": 4041.83,
+      "total_ms": 4832.2
+    }
+  }
+}
+```
+
+---
+
+### Extract Financial Highlights
+
+```http
+POST /extract/financial-highlights
+```
+
+Request:
+
+```json
+{
+  "top_k": 12
+}
+```
+
+Response:
+
+```json
+{
+  "document_name": "infosys_annual_report.pdf",
+  "fiscal_year": "2026",
+  "currency": "INR",
+  "financial_highlights": {
+    "consolidated_revenue_from_operations": {
+      "value": "₹1,78,650 crore",
+      "source_pages": [77]
+    },
+    "standalone_revenue_from_operations": {
+      "value": "₹1,48,819 crore",
+      "source_pages": [77]
+    },
+    "year_on_year_consolidated_revenue_growth": {
+      "value": "9.6%",
+      "source_pages": [77]
+    },
+    "total_dividend_per_share": {
+      "value": "₹48.00",
+      "source_pages": [38]
+    },
+    "buyback_amount": {
+      "value": "₹18,000 crore",
+      "source_pages": [38, 242]
+    },
+    "buyback_price_per_share": {
+      "value": "₹1,800 per share",
+      "source_pages": [38, 242]
+    }
+  },
+  "sources": [
+    {
+      "document_name": "infosys_annual_report.pdf",
+      "page_number": 38,
+      "chunk_id": "infosys_annual_report.pdf_p38_c1",
+      "score": 0.18783804211752372
+    }
+  ],
+  "metadata": {
+    "extraction_mode": "financial_highlights_json",
+    "retrieval_strategy": "coverage_first_hybrid_faiss_bm25_rrf",
+    "llm_provider": "gemini",
+    "is_answer_found": true,
+    "fallback_reason": null,
+    "sources_used": 6,
+    "extracted_field_count": 6,
+    "total_field_count": 6,
+    "extracted_fields": [
+      "consolidated_revenue_from_operations",
+      "standalone_revenue_from_operations",
+      "year_on_year_consolidated_revenue_growth",
+      "total_dividend_per_share",
+      "buyback_amount",
+      "buyback_price_per_share"
+    ],
+    "missing_fields": [],
+    "timings_ms": {
+      "retrieval_ms": 707.46,
+      "rerank_ms": 0,
+      "llm_ms": 6021.14,
+      "total_ms": 6728.65
+    }
+  }
+}
+```
+
+---
+
+### Workflow Ask
+
+```http
+POST /workflow/ask
+```
+
+This endpoint routes the user request through the LangGraph workflow.
+
+#### Normal Q&A Route
+
+Request:
+
+```json
+{
+  "question": "What dividend did Infosys announce?",
+  "top_k": 5
+}
+```
+
+Response includes:
+
+```json
+{
+  "question": "What dividend did Infosys announce?",
+  "intent": "normal_qna",
+  "tool_called": "rag_answer_tool",
+  "result": {
+    "answer": "..."
+  }
+}
+```
+
+#### Financial Extraction Route
+
+Request:
+
+```json
+{
+  "question": "Extract financial highlights as JSON",
+  "top_k": 12
+}
+```
+
+Response includes:
+
+```json
+{
+  "question": "Extract financial highlights as JSON",
+  "intent": "financial_extraction",
+  "tool_called": "financial_highlights_tool",
+  "result": {
+    "financial_highlights": {
+      "consolidated_revenue_from_operations": {
+        "value": "₹1,78,650 crore",
+        "source_pages": [77]
+      }
+    }
   }
 }
 ```
@@ -474,11 +754,11 @@ The project evaluates reranking instead of blindly assuming it improves retrieva
 
 Results:
 
-| Retrieval Mode               | Recall@5 | MRR@5  |
-| ---------------------------- | -------- | ------ |
-| Hybrid FAISS + BM25 + RRF    | 96.15%   | 73.72% |
-| Pure Cross-Encoder Reranking | 88.46%   | 67.24% |
-| Blended Reranking            | 100.00%  | 77.88% |
+| Retrieval Mode               | Recall@5 |  MRR@5 |
+| ---------------------------- | -------: | -----: |
+| Hybrid FAISS + BM25 + RRF    |   96.15% | 73.72% |
+| Pure Cross-Encoder Reranking |   88.46% | 67.24% |
+| Blended Reranking            |  100.00% | 77.88% |
 
 Conclusion:
 
@@ -529,6 +809,7 @@ finsight-ai/
 │       │
 │       ├── rag/
 │       │   ├── bm25_retriever.py
+│       │   ├── extraction.py
 │       │   ├── llm_client.py
 │       │   ├── pipeline.py
 │       │   ├── prompt.py
@@ -538,6 +819,11 @@ finsight-ai/
 │       │
 │       ├── vector_store/
 │       │   └── faiss_store.py
+│       │
+│       ├── workflows/
+│       │   ├── financial_workflow.py
+│       │   ├── state.py
+│       │   └── tools.py
 │       │
 │       ├── config.py
 │       └── schemas.py
@@ -617,6 +903,12 @@ docker compose build
 
 ```bash
 docker compose up -d
+```
+
+Or rebuild and start:
+
+```bash
+docker compose up -d --build
 ```
 
 ### 3. View logs
@@ -716,6 +1008,12 @@ What is Infosys Topaz Fabric?
 What does Infosys say about AI agents?
 ```
 
+Structured extraction example:
+
+```text
+Extract financial highlights as JSON
+```
+
 Unsupported questions:
 
 ```text
@@ -745,6 +1043,16 @@ Reciprocal Rank Fusion combines rankings from multiple retrievers without needin
 
 A pure cross-encoder reranker reduced performance on the evaluation set. Blended scoring preserved the hybrid retriever’s strength while allowing the reranker to improve ranking.
 
+### Why coverage-first retrieval for structured extraction?
+
+Normal Q&A needs the best context for one question, so blended reranking works well.
+
+Structured extraction needs evidence for multiple fields that may appear in different parts of the report. A single global reranker can over-focus on one topic and drop chunks needed for other fields. For this reason, financial extraction uses coverage-first hybrid retrieval.
+
+### Why LangGraph?
+
+LangGraph is used as a thin workflow layer to route user requests to the correct internal tool. The project keeps the core RAG pipeline custom-built and uses LangGraph only for controlled orchestration.
+
 ### Why source-grounded fallback?
 
 The system should not answer questions unsupported by the document. If the retrieved context does not contain the answer, it returns a controlled fallback response.
@@ -760,6 +1068,7 @@ The system should not answer questions unsupported by the document. If the retri
 * No frontend yet
 * No authentication
 * No PostgreSQL persistence yet
+* No cloud deployment yet
 * LLM answers depend on Gemini API availability
 
 ---
@@ -775,17 +1084,18 @@ The system should not answer questions unsupported by the document. If the retri
 * More extensive RAG evaluation set
 * Faithfulness scoring
 * Citation correctness evaluation
-* LangGraph-based controlled agentic workflows
 * Text-to-SQL over extracted financial metrics
 * Cloud deployment
+* CI/CD pipeline
 
 ---
+
 ## Project Highlights
 
 Possible resume bullets:
 
 ```text
-Built a source-grounded financial document intelligence assistant using RAG, FastAPI, FAISS, BM25, Sentence Transformers, Gemini, and Docker.
+Built a source-grounded financial document intelligence assistant using RAG, FastAPI, FAISS, BM25, Sentence Transformers, Gemini, LangGraph, and Docker.
 
 Implemented hybrid retrieval using FAISS vector search, BM25 keyword search, query expansion, and Reciprocal Rank Fusion for financial annual reports.
 
@@ -794,6 +1104,12 @@ Evaluated retrieval performance using Recall@5 and MRR@5 on a curated annual-rep
 Implemented and compared pure cross-encoder reranking against blended reranking, improving Recall@5 from 96.15% to 100.00%.
 
 Designed hallucination guardrails with context-only prompting, fallback responses, empty sources on unsupported answers, and structured metadata.
+
+Implemented structured financial highlights extraction as JSON with source pages, extracted/missing field metadata, and coverage-first retrieval.
+
+Added a controlled LangGraph workflow router with application-level tool calling, routing requests between source-grounded RAG Q&A and structured financial extraction.
+
+Added latency tracking for retrieval, reranking, LLM generation, and total response time to support production-style observability.
 
 Containerized the RAG API with Docker Compose, mounted document/index volumes, and cached Hugging Face models for repeatable local deployment.
 ```

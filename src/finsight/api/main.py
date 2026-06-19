@@ -11,12 +11,15 @@ from src.finsight.api.schemas import (
     DocumentUploadResponse,
     FinancialHighlightsRequest,
     FinancialHighlightsResponse,
+    WorkflowAskRequest,
+    WorkflowAskResponse,
 )
 
 from src.finsight.config import RAW_DATA_DIR
 from src.finsight.ingestion.service import ingest_pdf_document
 from src.finsight.rag.pipeline import RAGPipeline
 from src.finsight.rag.extraction import FinancialHighlightsExtractor
+from src.finsight.workflows.financial_workflow import FinancialWorkflow
 
 app = FastAPI(
     title="FinSight AI API",
@@ -27,6 +30,10 @@ app = FastAPI(
 
 app.state.rag_pipeline = RAGPipeline()
 app.state.financial_extractor = FinancialHighlightsExtractor(app.state.rag_pipeline)
+app.state.financial_workflow = FinancialWorkflow(
+    rag_pipeline=app.state.rag_pipeline,
+    financial_extractor=app.state.financial_extractor,
+)
 
 
 @app.get("/health")
@@ -101,6 +108,13 @@ def upload_document(file: UploadFile = File(...)) -> dict:
         ingestion_result = ingest_pdf_document(saved_path)
 
         app.state.rag_pipeline = RAGPipeline()
+        app.state.financial_extractor = FinancialHighlightsExtractor(
+            app.state.rag_pipeline
+        )
+        app.state.financial_workflow = FinancialWorkflow(
+            rag_pipeline=app.state.rag_pipeline,
+            financial_extractor=app.state.financial_extractor,
+        )
 
         return {
             "message": "Document uploaded and indexed successfully.",
@@ -118,3 +132,23 @@ def upload_document(file: UploadFile = File(...)) -> dict:
 
     finally:
         file.file.close()
+
+
+@app.post(
+    "/workflow/ask",
+    response_model=WorkflowAskResponse,
+)
+def workflow_ask(request: WorkflowAskRequest) -> dict:
+    try:
+        result = app.state.financial_workflow.invoke(
+            question=request.question,
+            top_k=request.top_k,
+        )
+
+        return result
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error),
+        ) from error

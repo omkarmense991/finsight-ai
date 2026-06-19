@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -67,6 +69,7 @@ class FinancialHighlightsRequest(BaseModel):
         description="Number of retrieved chunks to use for structured extraction.",
     )
 
+
 class FinancialMetricResponse(BaseModel):
     value: str | None = None
     source_pages: list[int] = Field(default_factory=list)
@@ -79,6 +82,7 @@ class FinancialHighlightsDataResponse(BaseModel):
     total_dividend_per_share: FinancialMetricResponse
     buyback_amount: FinancialMetricResponse
     buyback_price_per_share: FinancialMetricResponse
+
 
 class FinancialHighlightsMetadataResponse(BaseModel):
     extraction_mode: str
@@ -101,3 +105,24 @@ class FinancialHighlightsResponse(BaseModel):
     financial_highlights: FinancialHighlightsDataResponse
     sources: list[SourceResponse]
     metadata: FinancialHighlightsMetadataResponse
+
+
+class WorkflowAskRequest(BaseModel):
+    question: str = Field(
+        ...,
+        min_length=3,
+        description="User question to route through the LangGraph workflow.",
+    )
+    top_k: int = Field(
+        default=5,
+        ge=1,
+        le=18,
+        description="Number of chunks to use for the selected workflow tool.",
+    )
+
+
+class WorkflowAskResponse(BaseModel):
+    question: str
+    intent: str
+    tool_called: str
+    result: dict[str, Any]
