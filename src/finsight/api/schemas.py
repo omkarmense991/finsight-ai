@@ -1,5 +1,3 @@
-# src/finsight/api/schemas.py
-
 from pydantic import BaseModel, Field
 
 
@@ -24,6 +22,13 @@ class SourceResponse(BaseModel):
     score: float
 
 
+class TimingResponse(BaseModel):
+    retrieval_ms: float = 0.0
+    rerank_ms: float = 0.0
+    llm_ms: float = 0.0
+    total_ms: float = 0.0
+
+
 class MetadataResponse(BaseModel):
     top_k: int
     min_score: float
@@ -35,6 +40,7 @@ class MetadataResponse(BaseModel):
     llm_provider: str
     is_answer_found: bool
     fallback_reason: str | None = None
+    timings_ms: TimingResponse | None = None
 
 
 class AskResponse(BaseModel):

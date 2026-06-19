@@ -24,11 +24,19 @@ class MockRAGPipeline:
                 "top_k": top_k,
                 "min_score": 0.025,
                 "best_score": 0.95,
+                "best_retrieval_score": 0.95,
+                "best_final_score": 0.95,
                 "retrieved_chunks": 1,
-                "retrieval_strategy": "multi_query_rrf",
+                "retrieval_strategy": "hybrid_faiss_bm25_rrf_blended_rerank",
                 "llm_provider": "gemini",
                 "is_answer_found": True,
                 "fallback_reason": None,
+                "timings_ms": {
+                    "retrieval_ms": 10.0,
+                    "rerank_ms": 5.0,
+                    "llm_ms": 100.0,
+                    "total_ms": 115.0,
+                },
             },
         }
 
@@ -63,8 +71,11 @@ def test_ask_question_success():
     assert data["answer"] == "Mock answer from uploaded documents."
     assert len(data["sources"]) == 1
     assert data["sources"][0]["document_name"] == "mock_report.pdf"
-    assert data["metadata"]["retrieval_strategy"] == "multi_query_rrf"
+    assert (
+        data["metadata"]["retrieval_strategy"] == "hybrid_faiss_bm25_rrf_blended_rerank"
+    )
     assert data["metadata"]["is_answer_found"] is True
+    assert data["metadata"]["timings_ms"]["total_ms"] == 115.0
 
 
 def test_ask_question_validation_error_for_short_question():
