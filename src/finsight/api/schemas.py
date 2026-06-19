@@ -57,3 +57,47 @@ class DocumentUploadResponse(BaseModel):
     chunks_created: int
     index_path: str
     metadata_path: str
+
+
+class FinancialHighlightsRequest(BaseModel):
+    top_k: int = Field(
+        default=12,
+        ge=6,
+        le=18,
+        description="Number of retrieved chunks to use for structured extraction.",
+    )
+
+class FinancialMetricResponse(BaseModel):
+    value: str | None = None
+    source_pages: list[int] = Field(default_factory=list)
+
+
+class FinancialHighlightsDataResponse(BaseModel):
+    consolidated_revenue_from_operations: FinancialMetricResponse
+    standalone_revenue_from_operations: FinancialMetricResponse
+    year_on_year_consolidated_revenue_growth: FinancialMetricResponse
+    total_dividend_per_share: FinancialMetricResponse
+    buyback_amount: FinancialMetricResponse
+    buyback_price_per_share: FinancialMetricResponse
+
+class FinancialHighlightsMetadataResponse(BaseModel):
+    extraction_mode: str
+    retrieval_strategy: str
+    llm_provider: str
+    is_answer_found: bool
+    fallback_reason: str | None = None
+    sources_used: int
+    extracted_field_count: int = 0
+    total_field_count: int = 0
+    extracted_fields: list[str] = Field(default_factory=list)
+    missing_fields: list[str] = Field(default_factory=list)
+    timings_ms: TimingResponse | None = None
+
+
+class FinancialHighlightsResponse(BaseModel):
+    document_name: str | None = None
+    fiscal_year: str | None = None
+    currency: str | None = None
+    financial_highlights: FinancialHighlightsDataResponse
+    sources: list[SourceResponse]
+    metadata: FinancialHighlightsMetadataResponse

@@ -9,10 +9,14 @@ from src.finsight.api.schemas import (
     AskRequest,
     AskResponse,
     DocumentUploadResponse,
+    FinancialHighlightsRequest,
+    FinancialHighlightsResponse,
 )
+
 from src.finsight.config import RAW_DATA_DIR
 from src.finsight.ingestion.service import ingest_pdf_document
 from src.finsight.rag.pipeline import RAGPipeline
+from src.finsight.rag.extraction import FinancialHighlightsExtractor
 
 app = FastAPI(
     title="FinSight AI API",
@@ -22,6 +26,7 @@ app = FastAPI(
 
 
 app.state.rag_pipeline = RAGPipeline()
+app.state.financial_extractor = FinancialHighlightsExtractor(app.state.rag_pipeline)
 
 
 @app.get("/health")
@@ -37,6 +42,27 @@ def ask_question(request: AskRequest) -> dict:
     try:
         result = app.state.rag_pipeline.ask(
             question=request.question,
+            top_k=request.top_k,
+        )
+
+        return result
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error),
+        ) from error
+
+
+@app.post(
+    "/extract/financial-highlights",
+    response_model=FinancialHighlightsResponse,
+)
+def extract_financial_highlights(
+    request: FinancialHighlightsRequest,
+) -> dict:
+    try:
+        result = app.state.financial_extractor.extract_financial_highlights(
             top_k=request.top_k,
         )
 
